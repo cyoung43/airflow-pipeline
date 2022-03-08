@@ -1,0 +1,4 @@
+snowflake-connector-python==2.7.2
+dbt-snowflake==1.0.0
+airflow-dbt==0.4.0
+pyyaml==6.0
