@@ -21,7 +21,7 @@ target-path: '../../dbt_target'
 clean-targets:
   - '../../dbt_target'
 on_run_start: # the `on_run_start` hook allows you to specify what executes first on dbt run
-  - '{{ create_item_parse() }}'
+  - '{{ create_udfs() }}'
 
 models:
   dbt:
