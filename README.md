@@ -14,6 +14,9 @@ This guide will walk you through setting up the required dependencies for having
 2. Add `astro.exe` to Path
 3. Run `python -m venv dbt-env`
 4. Run `pip install -r requirements.txt`
+5. Activate the dbt-env and inside the `/dags` directory, run `dbt init`
+6. Check that airflow runs smoothly `astro dev start`
+
 
 
 
