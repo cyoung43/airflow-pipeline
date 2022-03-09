@@ -15,13 +15,20 @@ test-paths: ["tests"]
 seed-paths: ["seeds"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
+log-paths: ../../dbt_logs
 
-target-path: "target"
+target-path: '../../dbt_target'
 clean-targets:
-  - "target"
-  - "dbt_packages"
+  - '../../dbt_target'
+on_run_start: # the `on_run_start` hook allows you to specify what executes first on dbt run
+  - '{{ create_item_parse() }}'
 
 models:
   dbt:
-    example:
-      +materialized: view
+    +snowflake_warehouse: warehouse_name # name of warehouse to use
+    enabled: true
+    datalake: # or other name for extract schema name
+      +materialized: incremental
+      +database: db_name # name of db to use
+    dw: # or other name for load schema name
+      +materialized: table
