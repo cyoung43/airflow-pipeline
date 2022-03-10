@@ -21,16 +21,47 @@ default_args={
     "catchup": False,
 }
 
+
 # Constants
 DAG_TASK_CONCURRENCY = 8 # How many tasks can be run at once
 DAG_MAX_ACTIVE_RUNS = 1 # How many instances of a DAG can run at once
+
 
 # Environment variables. These are set in the Dockerfile. The `AIRFLOW_VAR` is a prefix and doesn't need to be included here.
 SNOWFLAKE_PASSWORD = Variable.get('snowflake_password')
 
 
+# Python functions
+def function_to_execute():
+    '''
+        Code here to execute data tasks
+    '''
+
+
+def sub_dag(parent_dag_name, child_dag_name):
+    _dag = DAG(
+        dag_id=f'{parent_dag_name}.{child_dag_name}',
+        default_args=default_args,
+        schedule_interval="@daily",
+        max_active_runs = DAG_MAX_ACTIVE_RUNS,
+        concurrency = DAG_TASK_CONCURRENCY
+    )
+
+    with _dag:
+        execute_function = PythonOperator(
+            task_id=f'Export_table',
+            python_callable=function_to_execute,
+            op_kwargs= {'df_key' : 'df',
+            'name_key' : 'table'}
+        )
+    
+        execute_function
+    
+    return _dag
+
+# Main dag
 with DAG(
-    dag_id="Sharetown-prod",
+    dag_id='dags_to_use',
     schedule_interval="0 12 * * *", # Run at 5:00am MST
     start_date=datetime(2022, 1, 1),
     default_args=default_args,
@@ -43,6 +74,11 @@ with DAG(
     # Dummy operator: usually used as a start node
     t0 = DummyOperator(
         task_id='start'
+    )
+
+    create_tables = SubDagOperator(
+        task_id='create_tables',
+        subdag=sub_dag('dags_to_use', 'example_sub_dag')
     )
 
 
@@ -71,5 +107,4 @@ with DAG(
         trigger_rule="all_done", # Run even if previous tasks failed
     )
 
-    t0 >> dbt_seed >> dbt_snapshot >> dbt_run
-
+    t0 >> create_tables >> dbt_seed >> dbt_snapshot >> dbt_run
