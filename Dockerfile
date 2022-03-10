@@ -3,3 +3,4 @@ ENV AIRFLOW_VAR_SNOWFLAKE_ACCOUNT=account_name
 ENV AIRFLOW_VAR_SNOWFLAKE_USERNAME=snowflake_username
 ENV AIRFLOW_VAR_SNOWFLAKE_PASSWORD=snowflake_password
 ENV AIRFLOW_VAR_SNOWFLAKE_TRANSFORM_WAREHOUSE_NAME=transform_warehouse_name
+# Add additional variables as needed
