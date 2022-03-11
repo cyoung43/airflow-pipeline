@@ -7,7 +7,7 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
 import snowflake.connector as sc
 from airflow.models import Variable
-from airflow.operators.dbt_operator import DbtRunOperator, DbtSeedOperator, DbtSnapshotOperator
+from airflow_dbt.operators.dbt_operator import DbtRunOperator, DbtSeedOperator, DbtSnapshotOperator
 from airflow.version import version
 from datetime import datetime, timedelta
 
@@ -78,7 +78,7 @@ with DAG(
 
     create_tables = SubDagOperator(
         task_id='create_tables',
-        subdag=sub_dag('dags_to_use', 'example_sub_dag')
+        subdag=sub_dag('dags_to_use', 'create_tables')
     )
 
 
