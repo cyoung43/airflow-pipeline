@@ -9,6 +9,8 @@ This guide will walk you through setting up the required dependencies for having
 5. DBT `fact_foreign_key_combinations` (for Tableau visualizations)
 6. Git pre-commit hooks
 7. Astronomer guides (continuous deployment)
+8. Integration with Airbyte
+9. Slack alerts on task failure/success
 
 ## Setup
 1. Download latest version of [Astronomer CLI](https://github.com/astronomer/astro-cli/releases/#assets) (select `windows_386`)
