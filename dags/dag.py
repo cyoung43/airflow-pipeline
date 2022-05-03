@@ -12,22 +12,12 @@ from airflow.providers.http.operators.http import SimpleHttpOperator
 from airflow.models import Variable
 from airflow.models.connection import Connection
 from airflow_dbt.operators.dbt_operator import DbtRunOperator, DbtSeedOperator, DbtSnapshotOperator
+from airflow.hooks.base_hook import BaseHook
+from airflow.providers.slack.operators.slack_webhook import SlackWebhookOperator
 from airflow.version import version
 from datetime import datetime, timedelta
 from airflow import settings
 import json
-
-
-# Default args for Airflow DAGs
-default_args={
-    "owner":"airflow",
-    "retries":1,
-    "retry_delay": timedelta(minutes=5),
-    "start_date": datetime(2021, 12, 1),
-    "catchup": False,
-}
-
-
 
 # Constants
 DAG_TASK_CONCURRENCY = 8 # How many tasks can be run at once
@@ -37,7 +27,63 @@ DAG_MAX_ACTIVE_RUNS = 1 # How many instances of a DAG can run at once
 # Environment variables. These are set in the Dockerfile. The `AIRFLOW_VAR` is a prefix and doesn't need to be included here.
 SNOWFLAKE_PASSWORD = Variable.get('snowflake_password')
 CONNECTION_ID = Variable.get('CONNECTION_ID')
+SLACK_CONN_ID = Variable.get('slack_connection')
 
+##### Slack Alerts #####
+def task_fail_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection(SLACK_CONN_ID).password
+    channel = BaseHook.get_connection(SLACK_CONN_ID).login
+    slack_msg = f"""
+        :x: Task Failed.
+        *Task*: {context.get('task_instance').task_id}
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('execution_date')}
+        <{context.get('task_instance').log_url}|*Log URL*>
+    """
+
+    slack_alert = SlackWebhookOperator(
+        task_id='slack_fail',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        channel=channel,
+        username='airflow',
+        http_conn_id=SLACK_CONN_ID
+    )
+
+    return slack_alert.execute(context=context)
+
+def task_succeed_slack_alert(context):
+    slack_webhook_token = BaseHook.get_connection(SLACK_CONN_ID).password
+    channel = BaseHook.get_connection(SLACK_CONN_ID).login
+    slack_msg = f"""
+        :white_check_mark: Task Succeeded!
+        *Dag*: {context.get('task_instance').dag_id}
+        *Execution Time*: {context.get('execution_date')}
+        <{context.get('task_instance').log_url}|*Log URL*>
+    """
+
+    slack_alert = SlackWebhookOperator(
+        task_id='slack_success',
+        webhook_token=slack_webhook_token,
+        message=slack_msg,
+        channel=channel,
+        username='airflow',
+        http_conn_id=SLACK_CONN_ID
+    )
+
+    return slack_alert.execute(context=context)
+
+
+# Default args for Airflow DAGs
+default_args={
+    "owner":"airflow",
+    "retries":1,
+    "retry_delay": timedelta(minutes=5),
+    "start_date": datetime(2021, 12, 1),
+    "catchup": False,
+    "on_failure_callback": task_fail_slack_alert,
+    "on_success_callback": task_succeed_slack_alert
+}
 
 # Python functions
 def function_to_execute():
