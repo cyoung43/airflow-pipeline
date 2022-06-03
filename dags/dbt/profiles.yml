@@ -1,13 +1,13 @@
-dbt:
+demo:
   target: dev
   outputs:
     dev:
-      account: "{{ env_var('AIRFLOW_VAR_SNOWFLAKE_ACCOUNT') }}"
-      database: SHARETOWN
-      password: "{{ env_var('AIRFLOW_VAR_SNOWFLAKE_PASSWORD') }}"
-      role: SYSADMIN
+      account: pn17132.us-east-2.aws
+      database: AIRBYTE
+      password: Bacolod@16
+      role: ACCOUNTADMIN
       schema: DW
       threads: 8
       type: snowflake
-      user: "{{ env_var('AIRFLOW_VAR_SNOWFLAKE_USERNAME') }}"
-      warehouse: "{{ env_var('AIRFLOW_VAR_SNOWFLAKE_TRANSFORM_WAREHOUSE_NAME') }}"
+      user: CHRIS
+      warehouse: COMPUTE_WH

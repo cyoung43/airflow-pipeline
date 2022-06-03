@@ -3,10 +3,9 @@ This guide will walk you through setting up the required dependencies for having
 
 ## Contents
 1. Setup
-2. Airflow dag examples (and subdags)
+2. Airflow dag examples
 3. Airflow DBT operator examples
 4. DBT pre-run hooks and macros
-5. DBT `fact_foreign_key_combinations` (for Tableau visualizations)
 6. Git pre-commit hooks
 7. Astronomer guides (continuous deployment)
 8. Integration with Airbyte
