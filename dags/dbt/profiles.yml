@@ -2,12 +2,12 @@ demo:
   target: dev
   outputs:
     dev:
-      account: pn17132.us-east-2.aws
-      database: AIRBYTE
-      password: Bacolod@16
-      role: ACCOUNTADMIN
-      schema: DW
+      account: <account_name>
+      database: <db>
+      password: <password>
+      role: <account_role>
+      schema: <schema>
       threads: 8
       type: snowflake
-      user: CHRIS
-      warehouse: COMPUTE_WH
+      user: <user>
+      warehouse: <warehouse>
