@@ -7,7 +7,10 @@ from airflow.utils.task_group import TaskGroup
 from datetime import date, datetime, timedelta
 from datetime import datetime
 from airflow.models import Variable
-from extract import execute
+from extract import *
+
+days_threshold = 30
+base_path = None
 
 default_args = {
     'owner': 'airflow',
@@ -35,7 +38,7 @@ def taskflow():
 
     log_cleanup = PythonOperator(
         task_id='log_cleanup',
-        python_callable=execute,
+        python_callable=Log_Cleanup().execute(),
         op_kwargs={}
     )
 
@@ -56,5 +59,7 @@ def taskflow():
     t0 >> bash >> log_cleanup >> bash2
 
 dag = taskflow()
+
+cleanup_logs = Log_cleanup(base_path, days_threshold)
 
 
