@@ -2,6 +2,7 @@ from airflow.decorators import dag
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.bash_operator import BashOperator
 from airflow.utils.task_group import TaskGroup
 from datetime import date, datetime, timedelta
 from datetime import datetime
@@ -38,9 +39,21 @@ def taskflow():
         op_kwargs={}
     )
 
+    bash = BashOperator(
+        task_id='bash_task',
+        bash_command='cd /usr/local/airflow/logs/dag_id=airflow_cleanup && ls -a',
+        
+    )
+
+    bash2 = BashOperator(
+        task_id='bash2_task',
+        bash_command='cd /usr/local/airflow/logs/dag_id=airflow_cleanup && ls -a',
+        
+    )
+
     t0 = DummyOperator(task_id='t0')
 
-    t0 >> log_cleanup
+    t0 >> bash >> log_cleanup >> bash2
 
 dag = taskflow()
 

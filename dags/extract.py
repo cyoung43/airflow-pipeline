@@ -19,11 +19,11 @@ Things to know:
 ############ Variables and Constants #############
 
 #base_path = None       # Base path can be found in top of log files. Should like similar to: /usr/local/airflow/logs/
-base_path = "/Users/np1356/Documents/Airflow/logs" 
+base_path = "/usr/local/airflow/logs" 
 current_day = str(datetime.now().date())
 DATE_REGEX = r'\d{4}-\d{2}-\d{2}' # matches YYYY-MM-DD
-TIME_REGEX = r'\d{2},\d{2},\d{2}' # change , to : in final version # Matches HH:MM:SS
-AGE_DAYS_THRESHOLD = 30
+TIME_REGEX = r'\d{2}:\d{2}:\d{2}' # change , to : in final version # Matches HH:MM:SS
+AGE_DAYS_THRESHOLD = 0
 
 
 
@@ -36,18 +36,22 @@ def build_dataframe(all_paths):
     print("Creating dataframe...")
     # Check if greater than 30 days
     for path in all_paths:
-        date_to_compare = date_extract(path)
+        if "dag_id=" in path:
+            date_to_compare = date_extract(path)
 
-        if date_diff(current_day, date_to_compare) > AGE_DAYS_THRESHOLD:
+            if date_diff(current_day, date_to_compare) >= AGE_DAYS_THRESHOLD:
 
-            # extract information from file path and add to dataframe
-            path_data = extract_path_data(path)
-            df.loc[len(df.index)] = path_data
+                # extract information from file path and add to dataframe
+                path_data = extract_path_data(path)
+                df.loc[len(df.index)] = path_data
 
     return df
 
 def date_extract(path, date_regex=DATE_REGEX):
+    print(TIME_REGEX)
+    print(path)
     extracted_date = re.findall(date_regex, path)
+    print(extracted_date)
     extracted_date = extracted_date[0]
     return extracted_date
 
@@ -162,7 +166,7 @@ def upload_dataframe_to_snowflake(df):
     print("Opening connection to snowflake...")
     conn = snowflake.connector.connect(
         user='nperez',
-        password='',
+        password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
         account='ex89663.west-us-2.azure',
         warehouse='AIRFLOW_TESTING',
         database='DB_AIRFLOW_LOGS',
@@ -189,6 +193,8 @@ def execute():
 
     df = build_dataframe(all_paths)
     total_logs = len(df.index)
+
+    print(df)
 
     # upload dataframe to snowflake
     success = False

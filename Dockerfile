@@ -12,3 +12,5 @@ RUN pip install apache-airflow-providers-http
 RUN pip install apache-airflow-providers-airbyte
 RUN pip install apache-airflow-providers-slack
 RUN pip install apache-airflow-providers-slack[http]
+#
+RUN pip install snowflake-connector-python[pandas]
