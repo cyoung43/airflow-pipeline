@@ -178,32 +178,33 @@ def upload_dataframe_to_snowflake(df):
 
 ######## Code Execution #########
 
-print("Starting...")
-if base_path:
-    print("Using supplied base path")
-    all_paths = find_files(base_path)
-else:
-    print("Using root as path. This may take a while...")
-    all_paths = find_files()
+def execute():
+    print("Starting...")
+    if base_path:
+        print("Using supplied base path")
+        all_paths = find_files(base_path)
+    else:
+        print("Using root as path. This may take a while...")
+        all_paths = find_files()
 
-df = build_dataframe(all_paths)
-total_logs = len(df.index)
+    df = build_dataframe(all_paths)
+    total_logs = len(df.index)
 
-# upload dataframe to snowflake
-success = False
-if total_logs > 0:
-    print(f'Found {total_logs} logs older than {AGE_DAYS_THRESHOLD} days.')
+    # upload dataframe to snowflake
+    success = False
+    if total_logs > 0:
+        print(f'Found {total_logs} logs older than {AGE_DAYS_THRESHOLD} days.')
 
-    success, nrows = upload_dataframe_to_snowflake(df)
-    
-    print(f'Success: {success} \t Records added: {nrows}')
-else:
-    print(f"No data uploaded. No logs older than {AGE_DAYS_THRESHOLD} days were found.")
+        success, nrows = upload_dataframe_to_snowflake(df)
+        
+        print(f'Success: {success} \t Records added: {nrows}')
+    else:
+        print(f"No data uploaded. No logs older than {AGE_DAYS_THRESHOLD} days were found.")
 
-# delete old folders
-print("\n")
-if success == True and nrows == total_logs:
-    print(f"Deleting old logs from Airflow...")
-    delete_old_folders(df)
+    # delete old folders
+    print("\n")
+    if success == True and nrows == total_logs:
+        print(f"Deleting old logs from Airflow...")
+        delete_old_folders(df)
 
-print("Done.")
+    print("Done.")
