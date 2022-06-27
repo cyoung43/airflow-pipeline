@@ -1,5 +1,9 @@
 # Airflow-DBT Generic Project
-This guide will walk you through setting up the required dependencies for having an Airflow-DBT project, and demo some useful features in this repository. 
+This guide will walk you through setting up the required dependencies for having an Airflow-DBT project, and demo some useful features in this repository.
+
+## TO DO
+1. Change DBT package to `airflow-dbt-python`
+2. Finish readme
 
 ## Contents
 1. [Setup](#setup)
