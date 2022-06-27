@@ -1,5 +1,5 @@
 # To Do
-- [] Standardize the code to be class-based (template off of rsf_rippling)
+-[] Standardize the code to be class-based (template off of rsf_rippling)
 
 ### Class sudo code (extract.py)
 ```python
@@ -28,12 +28,12 @@ cleanup_logs.execute(azure_blob, snowflake)
 ```
 
 #### To do continued:
-- [] Integrate the azure blob piece
+-[] Integrate the azure blob piece
     * Stage data before uploading to snowflake (as a csv)
-- [] Integrate snowflake functions
+-[] Integrate snowflake functions
     * create and replace tables
     * merges in the data -- automatically handles data duplication
-- [] Cleanup metadata within airflow postgres database
+-[] Cleanup metadata within airflow postgres database
     * Logs table
     * Xcom table
     * variables table
