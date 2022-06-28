@@ -1,6 +1,6 @@
 import snowflake.connector as sc
 from sqlalchemy import column, table, true
-from lib.rsf_interfaces import LoadInterface
+from rsf_interfaces import LoadInterface
 
 def convert_dtype(dtype):
     '''
@@ -72,13 +72,14 @@ def get_column_object(columns, data_types = False):
 
 class Snowflake(LoadInterface):
 
-    def __init__(self, account, database, warehouse, user, password, stage_name, file_format = None):
+    def __init__(self, account, database, warehouse, user, password, stage_name, schema = 'DATA_LAKE', file_format = None):
         self.account = account
         self.database = database
         self.warehouse = warehouse
         self.user = user
         self.password = password
         self.stage_name = stage_name
+        self.schema = schema
         self.file_format = file_format
         self.conn = None
 

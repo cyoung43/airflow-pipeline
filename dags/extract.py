@@ -1,16 +1,18 @@
-# Retrieve logs and check if they are older than 30 days
+
+# pyright: reportMissingImports=false
+# pyright: reportMissingModuleSource=false
 
 import os
 import re
 import shutil
 import pandas as pd
 from datetime import datetime
-import snowflake.connector
+import snowflake.connector as sc
 from snowflake.connector.pandas_tools import write_pandas
 
 ###########
 from rsf_snowflake import Snowflake
-from rsf_azure_blob import AzureBlob
+# from rsf_azure_blob import AzureBlob
 
 """
 Things to know:
@@ -25,12 +27,14 @@ Things to know:
 current_day = str(datetime.now().date())
 DATE_REGEX = r'\d{4}-\d{2}-\d{2}' # matches YYYY-MM-DD
 TIME_REGEX = r'\d{2}:\d{2}:\d{2}' # change , to : in final version # Matches HH:MM:SS
-AGE_DAYS_THRESHOLD = 0
+# AGE_DAYS_THRESHOLD = 30
 
 class Log_Cleanup():
-    def __init__(self, base_path=None, age_days_threshold=30):
+    def __init__(self, snowflake_connection, base_path=None, age_days_threshold=30):
+        self.snowflake = snowflake_connection
         self.base_path = base_path
         self.age_days_threshold = age_days_threshold
+        
 
     ############ Functions for extracting data from logs #############
 
@@ -53,7 +57,7 @@ class Log_Cleanup():
 
         return df
 
-    def date_extract(path, date_regex=DATE_REGEX):
+    def date_extract(self, path, date_regex=DATE_REGEX):
         # print(TIME_REGEX)
         # print(path)
         extracted_date = re.findall(date_regex, path)
@@ -61,7 +65,7 @@ class Log_Cleanup():
         extracted_date = extracted_date[0]
         return extracted_date
 
-    def date_diff(date1, date2):
+    def date_diff(self, date1, date2):
         #converts string to datetime objects
         date1 = datetime.strptime(date1, '%Y-%m-%d')
         date2 = datetime.strptime(date2, '%Y-%m-%d')
@@ -139,7 +143,7 @@ class Log_Cleanup():
 
         return path_data
 
-    def find_files(path='/'):
+    def find_files(self, path='/'):
         list_of_paths = []
 
         for dirpath, dirnames, filenames in os.walk(path):
@@ -164,31 +168,52 @@ class Log_Cleanup():
 
         return list_of_paths
 
-    def time_extract(path, time_regex=TIME_REGEX):
+    def time_extract(self, path, time_regex=TIME_REGEX):
         extracted_time = re.findall(time_regex, path)
         extracted_time = extracted_time[0]
         return extracted_time
 
-    def upload_dataframe_to_snowflake(df):
+    def upload_dataframe_to_snowflake(self, df):
         print("\n")
         print("Opening connection to snowflake...")
-        conn = snowflake.connector.connect(
+        snowflake = Snowflake(
             user='nperez',
-            password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
-            account='ex89663.west-us-2.azure',
-            warehouse='AIRFLOW_TESTING',
+            account = 'ex89663.west-us-2.azure',
             database='DB_AIRFLOW_LOGS',
+            warehouse='AIRFLOW_TESTING',
+            password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
+            stage_name='STAGE_AIRFLOW_TEST',
             schema='SCHEMA_AIRFLOW_TEST',
         )
 
-        success, nchunks, nrows, _ = write_pandas(conn, df, 'logs_data', quote_identifiers=False)
+
+        conn = sc.connect(
+            user=snowflake.user,
+            password=snowflake.password,
+            account=snowflake.account,
+            warehouse=snowflake.warehouse,
+            database=snowflake.database,
+            schema=snowflake.schema,
+        )
+
+        # Create table in database
+        print("Creating table in database...")
+        my_types = dict(df.dtypes)
+
+        #TODO: make this more robust
+        
+        snowflake.create_target_table("Testing", columns=df.columns, data_types=my_types, schema=snowflake.schema, replace=False)
+
+        success, nchunks, nrows, _ = write_pandas(conn, df, 'Testing', quote_identifiers=False)
         conn.close()
         print("Snowflake connection closed.")
         return success, nrows
 
+    
+
     ######## Code Execution #########
 
-    def execute(self, azure_blob, snowflake):
+    def execute(self):
         print("Starting...")
         if self.base_path:
             print("Using supplied base path")
@@ -203,7 +228,7 @@ class Log_Cleanup():
         print(df)
 
         # write to csv
-        azure_blob.dump(df)
+        #azure_blob.dump(df)
 
         # upload dataframe to snowflake
         success = False
@@ -224,3 +249,17 @@ class Log_Cleanup():
             self.delete_old_folders(df)
 
         print("Done.")
+
+
+snowflake = Snowflake(
+            user='nperez',
+            account = 'ex89663.west-us-2.azure',
+            database='DB_AIRFLOW_LOGS',
+            warehouse='AIRFLOW_TESTING',
+            password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
+            stage_name='STAGE_AIRFLOW_TEST',
+            schema='SCHEMA_AIRFLOW_TEST',
+        )
+
+# my_object = Log_Cleanup(snowflake, "/Users/np1356/Desktop/Airflow/airflow-dbt-starter/logs")
+# my_object.execute()
