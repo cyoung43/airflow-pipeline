@@ -11,7 +11,7 @@ from extract import Log_Cleanup
 from rsf_snowflake import Snowflake
 
 days_threshold = 0
-base_path = None
+base_path = "/"
 
 ########### CONSTANTS ###########
 # RETRIES = int(Variable.get('default_retries'))

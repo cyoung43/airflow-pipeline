@@ -9,6 +9,8 @@ import pandas as pd
 from datetime import datetime
 import snowflake.connector as sc
 from snowflake.connector.pandas_tools import write_pandas
+from airflow.operators.python_operator import PythonOperator
+from airflow.utils.task_group import TaskGroup
 
 ###########
 from rsf_snowflake import Snowflake
@@ -28,11 +30,11 @@ Things to know:
 # TO DO: move to init as default parameters and class variables
 current_day = str(datetime.now().date())
 DATE_REGEX = r'\d{4}-\d{2}-\d{2}' # matches YYYY-MM-DD
-TIME_REGEX = r'\d{2}:\d{2}:\d{2}' # change , to : in final version # Matches HH:MM:SS
+TIME_REGEX = r'\d{2},\d{2},\d{2}' # change , to : in final version # Matches HH:MM:SS
 # AGE_DAYS_THRESHOLD = 30
 
 class Log_Cleanup():
-    def __init__(self, snowflake_connection, base_path=None, age_days_threshold=30):
+    def __init__(self, snowflake_connection, base_path="/", age_days_threshold=30):
         self.snowflake = snowflake_connection
         self.base_path = base_path
         self.age_days_threshold = age_days_threshold
@@ -58,6 +60,82 @@ class Log_Cleanup():
                     df.loc[len(df.index)] = path_data
 
         return df
+    
+    def create_task_group(self, endpoints, dump_object, load_object, default_args, time_extract = False, time_api_key = None):
+        """Creates a task group (airflow UI grouping method) for the list of tables
+
+            Parameters:
+                endpoints (list: dict): list of dictionary objects containing endpoint name and columns to select
+                    - endpoint = {
+                        'name': (str) name of endpoint,
+                        'columns_filter': (list/optional) list of columns to select
+                        'params': (str/optional) table to query snowflake to get the necessary fields to iterate on
+                        'query_name': (str/optional) query name to help build query string for the endpoint
+                        'url_pt_2': (str/optional) url part 2. This is the second half of the api endpoint, if there is one
+                        }
+                dump_object (EbDumpInterface): object to dump data to Azure blob
+                load_object (EbLoadInterface): object to load data (Snowflake)
+                default_args (dict): default arguments for task group
+                time_extract (bool/optional): whether or not this is a time & attendance extraction. Defaults to False
+                time_api_key (str/optional): api key for time & attendance extraction. Defaults to None
+        
+            Returns:
+                task_group (list): list of task group objects
+        """
+
+        task_groups = []
+
+        for endpoint in endpoints:
+
+            tg = TaskGroup(
+                group_id=endpoint['table_name'] if 'table_name' in endpoint else endpoint['endpoint'],
+                default_args=default_args,
+            )
+
+            with tg:
+                execute_extract = PythonOperator(
+                    task_id=f'extract_{endpoint["table_name"] if "table_name" in endpoint else endpoint["endpoint"]}',
+                    python_callable=self.time_extract if time_extract else self.extract,
+                    op_kwargs={
+                        'endpoint': endpoint['endpoint'],
+                        'dump_obj': dump_object,
+                        'load_obj': load_object,
+                        'columns_filter': endpoint['columns_filter'] if 'columns_filter' in endpoint.keys() else None,
+                        'api_key': time_api_key,
+                        'params': endpoint['params'] if 'params' in endpoint.keys() else None,
+                        'query_name': endpoint['query_name'] if 'query_name' in endpoint.keys() else None,
+                        'url_pt_2': endpoint['url_pt_2'] if 'url_pt_2' in endpoint.keys() else '',
+                    }
+                )
+
+                execute_create_table = PythonOperator(
+                    task_id=f'create_{endpoint["table_name"] if "table_name" in endpoint else endpoint["endpoint"]}',
+                    python_callable=self.create_table,
+                    op_kwargs={
+                        'endpoint': endpoint['table_name'] if 'table_name' in endpoint else endpoint['endpoint'],
+                        'load_obj': load_object,
+                        'replace': False,
+                        'group_task': True,
+                        'full_name': endpoint['table_name'] if 'table_name' in endpoint else endpoint['endpoint'],
+                    }
+                )
+
+                execute_table_import = PythonOperator(
+                    task_id=f'import_{endpoint["table_name"] if "table_name" in endpoint else endpoint["endpoint"]}',
+                    python_callable=self.load,
+                    op_kwargs={
+                        'endpoint': endpoint['table_name'] if 'table_name' in endpoint else endpoint['endpoint'],
+                        'load_obj': load_object,
+                        'group_task': True,
+                        'full_name': endpoint['table_name'] if 'table_name' in endpoint else endpoint['endpoint'],
+                    }
+                )
+
+                execute_extract >> execute_create_table >> execute_table_import
+
+            task_groups.append(tg)
+        
+        return task_groups
 
     def date_extract(self, path, date_regex=DATE_REGEX):
         # print(TIME_REGEX)
@@ -253,15 +331,15 @@ class Log_Cleanup():
         print("Done.")
 
 
-# snowflake = Snowflake(
-#             user='nperez',
-#             account = 'ex89663.west-us-2.azure',
-#             database='DB_AIRFLOW_LOGS',
-#             warehouse='AIRFLOW_TESTING',
-#             password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
-#             stage_name='STAGE_AIRFLOW_TEST',
-#             schema='SCHEMA_AIRFLOW_TEST',
-#         )
+snowflake = Snowflake(
+            user='nperez',
+            account = 'ex89663.west-us-2.azure',
+            database='DB_AIRFLOW_LOGS',
+            warehouse='AIRFLOW_TESTING',
+            password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
+            stage_name='STAGE_AIRFLOW_TEST',
+            schema='SCHEMA_AIRFLOW_TEST',
+        )
 
-# my_object = Log_Cleanup(snowflake, "/Users/np1356/Desktop/Airflow/airflow-dbt-starter/logs")
-# my_object.execute()
+my_object = Log_Cleanup(snowflake, "/Users/np1356/Desktop/Airflow/airflow-dbt-starter/logs")
+my_object.execute()
