@@ -60,7 +60,15 @@ def taskflow(base_path, days_threshold):
     ### Airflow Maintenance DAG
     '''
 
-    snowflake = Snowflake(SNOWFLAKE_ACCOUNT, DATABASE_NAME, WAREHOUSE_NAME, SNOWFLAKE_USERNAME, SNOWFLAKE_PASSWORD, SNOWFLAKE_STAGE_NAME)
+    snowflake = Snowflake(
+        SNOWFLAKE_ACCOUNT, 
+        DATABASE_NAME, 
+        WAREHOUSE_NAME, 
+        SNOWFLAKE_USERNAME, 
+        SNOWFLAKE_PASSWORD, 
+        SNOWFLAKE_STAGE_NAME, 
+        SNOWFLAKE_SCHEMA
+    )
 
     log_cleanup = PythonOperator(
         task_id='log_cleanup',
@@ -85,7 +93,7 @@ def taskflow(base_path, days_threshold):
     t0 >> bash >> log_cleanup >> bash2
 
 
-taskflow = taskflow(base_path, days_threshold)
+dag = taskflow(base_path, days_threshold)
 
 
 
