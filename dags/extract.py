@@ -294,25 +294,25 @@ class Log_Cleanup():
                 }
             )
 
-            execute_create_table = PythonOperator(
-                task_id=f'create_logs',
-                python_callable=self.create_table,
-                op_kwargs={
-                    'load_obj': load_object,
-                    'replace': False,
-                }
-            )
+            # execute_create_table = PythonOperator(
+            #     task_id=f'create_logs',
+            #     python_callable=self.create_table,
+            #     op_kwargs={
+            #         'load_obj': load_object,
+            #         'replace': False,
+            #     }
+            # )
 
-            execute_table_import = PythonOperator(
-                task_id=f'import_logs',
-                python_callable=self.load,
-                op_kwargs={
-                    'load_obj': load_object,
-                    'group_task': True,
-                }
-            )
+            # execute_table_import = PythonOperator(
+            #     task_id=f'import_logs',
+            #     python_callable=self.load,
+            #     op_kwargs={
+            #         'load_obj': load_object,
+            #         'group_task': True,
+            #     }
+            # )
 
-            execute_extract >> execute_create_table >> execute_table_import
+            execute_extract # >> execute_create_table >> execute_table_import
 
         task_groups.append(tg)
         

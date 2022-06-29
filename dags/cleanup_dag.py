@@ -1,3 +1,4 @@
+from distutils import log
 from airflow.decorators import dag
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
@@ -69,7 +70,7 @@ def taskflow(base_path, days_threshold):
     # 'DATA_LAKE.PUBLIC.AZURE_DATA_LAKE' - Azure bucket name
     # 'DATA_LAKE.PUBLIC.MYSQL_CSV' - Formatting csv (file_format)
 
-    log_cleanup_tasks = Log_Cleanup.create_task_group('logs', 'dump', snowflake, default_args)
+    log_cleanup_tasks = logs.create_task_group('logs', 'dump', snowflake, default_args)
 
     bash = BashOperator(
         task_id='bash_task',
@@ -85,7 +86,7 @@ def taskflow(base_path, days_threshold):
 
     t0 = DummyOperator(task_id='t0')
 
-    t0 >> bash >> log_cleanup >> bash2
+    t0 >> bash >> [task for task in log_cleanup_tasks] >> bash2
 
 
 dag = taskflow(base_path, days_threshold)
