@@ -24,6 +24,8 @@ Things to know:
 
 #base_path = None   
 # base_path = "/usr/local/airflow/logs" 
+
+# TO DO: move to init as default parameters and class variables
 current_day = str(datetime.now().date())
 DATE_REGEX = r'\d{4}-\d{2}-\d{2}' # matches YYYY-MM-DD
 TIME_REGEX = r'\d{2}:\d{2}:\d{2}' # change , to : in final version # Matches HH:MM:SS
@@ -251,15 +253,15 @@ class Log_Cleanup():
         print("Done.")
 
 
-snowflake = Snowflake(
-            user='nperez',
-            account = 'ex89663.west-us-2.azure',
-            database='DB_AIRFLOW_LOGS',
-            warehouse='AIRFLOW_TESTING',
-            password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
-            stage_name='STAGE_AIRFLOW_TEST',
-            schema='SCHEMA_AIRFLOW_TEST',
-        )
+# snowflake = Snowflake(
+#             user='nperez',
+#             account = 'ex89663.west-us-2.azure',
+#             database='DB_AIRFLOW_LOGS',
+#             warehouse='AIRFLOW_TESTING',
+#             password='AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2',
+#             stage_name='STAGE_AIRFLOW_TEST',
+#             schema='SCHEMA_AIRFLOW_TEST',
+#         )
 
 # my_object = Log_Cleanup(snowflake, "/Users/np1356/Desktop/Airflow/airflow-dbt-starter/logs")
 # my_object.execute()
