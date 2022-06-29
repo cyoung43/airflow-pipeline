@@ -69,11 +69,7 @@ def taskflow(base_path, days_threshold):
     # 'DATA_LAKE.PUBLIC.AZURE_DATA_LAKE' - Azure bucket name
     # 'DATA_LAKE.PUBLIC.MYSQL_CSV' - Formatting csv (file_format)
 
-    log_cleanup = PythonOperator(
-        task_id='log_cleanup',
-        python_callable=logs.execute(),
-        op_kwargs={}
-    )
+    log_cleanup_tasks = Log_Cleanup.create_task_group('logs', 'dump', snowflake, default_args)
 
     bash = BashOperator(
         task_id='bash_task',

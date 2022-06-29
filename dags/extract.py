@@ -255,7 +255,7 @@ class Log_Cleanup():
 
         print("Done.")
 
-    def create_task_group(self, group_name, dump_object, load_object, default_args, time_extract = False, time_api_key = None):
+    def create_task_group(self, group_name, dump_object, load_object, default_args):
         """Creates a task group (airflow UI grouping method) for the list of tables
 
             Parameters:
@@ -287,15 +287,15 @@ class Log_Cleanup():
         with tg:
             execute_extract = PythonOperator(
                 task_id=f'extract_logs',
-                python_callable=self.time_extract if time_extract else self.extract,
+                python_callable=self.execute,
                 op_kwargs={
-                    'dump_obj': dump_object,
+                    # 'dump_obj': dump_object,
                     'load_obj': load_object,
                 }
             )
 
             execute_create_table = PythonOperator(
-                task_id=f'create_;ogs',
+                task_id=f'create_logs',
                 python_callable=self.create_table,
                 op_kwargs={
                     'load_obj': load_object,
