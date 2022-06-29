@@ -5,10 +5,10 @@ with parsed as (
 )
 
 select
-    p.parse:GAME_ID::int as GAME_ID,
+    p.parse:GAME_ID::int as GAME_ID, --@col Game Id. Id the of the NBA game played
     p.parse:MATCHUP::varchar as MATCHUP,
     p.parse:LOCATION::varchar as LOCATION,
-    p.parse:player_name::varchar as PLAYER_NAME,
+    p.parse:player_name::varchar as PLAYER_NAME, --@col Player Name. Name of the player taking the shot
     p.parse:player_id::int as PLAYER_ID,
     p.parse:SHOT_NUMBER::int as SHOT_NUMBER,
     p.parse:PERIOD::int as QUARTER,
