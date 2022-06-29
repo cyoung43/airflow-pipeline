@@ -1,3 +1,4 @@
+from distutils import log
 from airflow.decorators import dag
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python_operator import PythonOperator
@@ -11,12 +12,9 @@ from extract import Log_Cleanup
 from rsf_snowflake import Snowflake
 
 days_threshold = 0
-base_path = None
+base_path = "/"
 
 ########### CONSTANTS ###########
-# RIPPLING_API_KEY = Variable.get('rippling_api_key')
-# RIPPLING_BASE_URL = Variable.get('rippling_base_url')
-# RIPPLING_TIME_API_KEY = Variable.get('rippling_time_api_key')
 # RETRIES = int(Variable.get('default_retries'))
 # DBT_LOCATION = Variable.get('dbt_location')
 # DAG_MAX_ACTIVE_RUNS = int(Variable.get('default_dag_max_active_runs'))
@@ -30,9 +28,6 @@ SNOWFLAKE_PASSWORD = "AUGm%1l4Cf^C24w1gOQvRv%B%lRT^q3i2"
 SNOWFLAKE_ACCOUNT = "ex89663.west-us-2.azure"
 SNOWFLAKE_SCHEMA = "SCHEMA_AIRFLOW_TEST"
 SNOWFLAKE_STAGE_NAME = "STAGE_AIRFLOW_TEST"
-# RIPPLING_BASE_URL = Variable.get('rippling_base_url')
-
-
 
 
 default_args = {
@@ -70,11 +65,12 @@ def taskflow(base_path, days_threshold):
         SNOWFLAKE_SCHEMA
     )
 
-    log_cleanup = PythonOperator(
-        task_id='log_cleanup',
-        python_callable=Log_Cleanup(snowflake, base_path, days_threshold).execute(),
-        op_kwargs={}
-    )
+    logs = Log_Cleanup(snowflake, base_path, days_threshold)
+
+    # 'DATA_LAKE.PUBLIC.AZURE_DATA_LAKE' - Azure bucket name
+    # 'DATA_LAKE.PUBLIC.MYSQL_CSV' - Formatting csv (file_format)
+
+    log_cleanup_tasks = logs.create_task_group('logs', 'dump', snowflake, default_args)
 
     bash = BashOperator(
         task_id='bash_task',
@@ -90,7 +86,7 @@ def taskflow(base_path, days_threshold):
 
     t0 = DummyOperator(task_id='t0')
 
-    t0 >> bash >> log_cleanup >> bash2
+    t0 >> bash >> [task for task in log_cleanup_tasks] >> bash2
 
 
 dag = taskflow(base_path, days_threshold)
