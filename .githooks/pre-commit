@@ -1,5 +1,5 @@
 #!/usr/bin python3
-from generate_dbt_data_dictionary import DbtDataDictionary
+from ./generate_dbt_data_dictionary.py import DbtDataDictionary
 
 print("Executing Pre-Commit Hook")
 
